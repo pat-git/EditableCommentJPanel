@@ -2,7 +2,9 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -16,8 +18,7 @@ import javax.swing.text.BadLocationException;
 public final class MainFrame extends JFrame {
 
     private JTextArea textArea;
-    private Map<Integer, String> comments = new HashMap<>();
-    private boolean debugCursor;
+    private Map<List<Integer>, EditableToolTipPanel> comments = new HashMap<>();
 
     /**
      * The main method of the Chatsystem. Creates a MainFrame
@@ -40,7 +41,6 @@ public final class MainFrame extends JFrame {
         setTitle("EditableComments");
         setSize(getScreenSize().width / 2, getScreenSize().height / 2);
         setLocation(getScreenSize().width / 3, getScreenSize().height / 3);
-        //debugCursor = true;
         revalidate();
         createPanelToolTip();
     }
@@ -56,6 +56,36 @@ public final class MainFrame extends JFrame {
         textArea = new JTextArea(100, 100);
         textArea.setEditable(true);
         textArea.setBounds(0, 0, getScreenSize().width / 2, getScreenSize().height / 2);
+        textArea.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                int offset = textArea.viewToModel(mouseEvent.getPoint());
+                EditableToolTipPanel selectedComment = getEditableToolTipPanel(offset);
+                if (selectedComment != null) {
+                    selectedComment.setVisible(true);
+                    selectedComment.setClickedToEdit(true);
+                }
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent mouseEvent) {
+               int offset = textArea.viewToModel(mouseEvent.getPoint());
+               EditableToolTipPanel selectedComment = getEditableToolTipPanel(offset);
+                if (selectedComment != null) {
+                    selectedComment.setVisible(true);
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent mouseEvent) {
+                int offset = textArea.viewToModel(mouseEvent.getPoint());
+                EditableToolTipPanel selectedComment = getEditableToolTipPanel(offset);
+                if (selectedComment != null) {
+                    selectedComment.setVisible(false);
+                    selectedComment.setClickedToEdit(true);
+                }
+            }
+        });
         mainTextAreaPane.add(textArea, 0 ,0);
         addButtonListener(addCommentButton, mainTextAreaPane);
         repaint();
@@ -65,15 +95,7 @@ public final class MainFrame extends JFrame {
     private void addButtonListener(JButton addCommentButton, JLayeredPane textAreaPane) {
         addCommentButton.addActionListener(e -> {
             int offset = textArea.getCaretPosition();
-            Rectangle position = null;
-            try {
-                position = textArea.modelToView(offset);
-            } catch (BadLocationException e1) {
-                e1.printStackTrace();
-            }
-            if(position != null){
-                addComment(textAreaPane, position);
-            }
+            addComment(textAreaPane, offset);
         });
     }
 
@@ -87,35 +109,26 @@ public final class MainFrame extends JFrame {
         return Toolkit.getDefaultToolkit().getScreenSize();
     }
 
-    private void addComment(JLayeredPane pane, Rectangle position){
-        //JPanel commentPanel = new JPanel();
-        EditableToolTipPanel editableToolTipPanel = new EditableToolTipPanel();
-        /*commentPanel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                editableToolTipPanel.setVisible(true);
-                editableToolTipPanel.requestFocusInWindow();
-                editableToolTipPanel.setClickedToEdit(true);
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                editableToolTipPanel.setVisible(true);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if(!editableToolTipPanel.hasClickedToEdit()){
-                    editableToolTipPanel.setVisible(false);
-                }
-            }
-        });*/
-        //pane.add(commentPanel, 1, 1);
+    private void addComment(JLayeredPane pane, int offset){
+        EditableToolTipPanel editableToolTipPanel = new EditableToolTipPanel(offset, textArea);
         pane.add(editableToolTipPanel, 1, 2);
-        JLabel commentLabel = new JLabel("C");
-        //commentPanel.add(commentLabel);
-        //commentPanel.setBounds(position.x, position.y,20, 20);
+        List<Integer> offsetRange = new ArrayList<>();
+        offsetRange.add(offset);
+        offsetRange.add(offset+1);
+        comments.put(offsetRange, editableToolTipPanel);
         editableToolTipPanel.setVisible(false);
         editableToolTipPanel.setText("Test");
+    }
+
+    public EditableToolTipPanel getEditableToolTipPanel(int selectedOffset) {
+        System.out.println(selectedOffset);
+        for(List<Integer> offSetRange : comments.keySet()){
+            for(Integer offset : offSetRange){
+                if(offset == selectedOffset){
+                    return comments.get(offSetRange);
+                }
+            }
+        }
+        return null;
     }
 }

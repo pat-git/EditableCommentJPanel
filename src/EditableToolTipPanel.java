@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -8,14 +9,15 @@ import java.awt.event.FocusEvent;
 public class EditableToolTipPanel extends JPanel {
 
     private int positionOffset;
-    private Rectangle currentAbsolutePosition;
-    private JTextArea textArea;
-    private JPanel parentPanel;
+    private JTextArea topLevelTextArea;
+    private JTextArea commentTextArea;
     private boolean clickedToEdit;
 
-    public EditableToolTipPanel(){
-        textArea = new JTextArea();
-        textArea.getDocument().addDocumentListener(new DocumentListener() {
+    public EditableToolTipPanel(int positionOffset, JTextArea topLevelTextArea){
+        this.positionOffset = positionOffset;
+        this.topLevelTextArea = topLevelTextArea;
+        commentTextArea = new JTextArea();
+        commentTextArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 refreshPosition();
@@ -31,7 +33,7 @@ public class EditableToolTipPanel extends JPanel {
 
             }
         });
-        textArea.addFocusListener(new FocusAdapter() {
+        commentTextArea.addFocusListener(new FocusAdapter() {
             /**
              * Invoked when a component loses the keyboard focus.
              *
@@ -44,13 +46,13 @@ public class EditableToolTipPanel extends JPanel {
             }
         });
         setBorder(new EditableToolTipPanelStyle());
-        add(textArea);
+        add(commentTextArea);
         repaint();
         revalidate();
     }
 
     private void refreshSize() {
-        setSize(new Dimension(textArea.getPreferredSize().width + 22,textArea.getPreferredSize().height + 12));
+        setSize(new Dimension(commentTextArea.getPreferredSize().width + 22, commentTextArea.getPreferredSize().height + 12));
         revalidate();
         repaint();
     }
@@ -64,15 +66,21 @@ public class EditableToolTipPanel extends JPanel {
         refreshSize();
         int width = getSize().width;
         int height = getSize().height;
-        int x = parentPanel.getX();
-        int y = parentPanel.getY() + parentPanel.getHeight() + 2;
+        Rectangle postionRectangle = null;
+        try {
+            postionRectangle = topLevelTextArea.modelToView(positionOffset);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+        int x = postionRectangle.x;
+        int y = postionRectangle.y + topLevelTextArea.getFont().getSize();
         setBounds(x , y , width, height);
         repaint();
         revalidate();
     }
 
     public void setText(String text){
-        textArea.setText(text);
+        commentTextArea.setText(text);
         refreshPosition();
     }
 
