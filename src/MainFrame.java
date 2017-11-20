@@ -1,6 +1,6 @@
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,84 +38,45 @@ public final class MainFrame extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
         setTitle("EditableComments");
-        setSize(getScreenSize().width / 4, getScreenSize().height / 4);
-        setLocation(getScreenSize().width / 5, getScreenSize().height / 5);
-        setLayout(new BorderLayout());
+        setSize(getScreenSize().width / 2, getScreenSize().height / 2);
+        setLocation(getScreenSize().width / 3, getScreenSize().height / 3);
         //debugCursor = true;
-        addTextArea();
-        addTestComments();
+        revalidate();
+        createPanelToolTip();
+    }
+
+    private void createPanelToolTip() {
+        getContentPane().setLayout(new BorderLayout());
+        JPanel mainTextAreaPanel = new JPanel();
+        mainTextAreaPanel.setLayout(null);
+        JButton addCommentButton = new JButton("Add Comment");
+        addButtonListener(addCommentButton, mainTextAreaPanel);
+        getContentPane().add(mainTextAreaPanel, BorderLayout.CENTER);
+        getContentPane().add(addCommentButton, BorderLayout.SOUTH);
+        Dimension size = getContentPane().getSize();
+        textArea = new JTextArea();
+        textArea.setRows(29);
+        textArea.setColumns(100);
+        textArea.setEditable(true);
+        textArea.setBounds(0, 0, size.width, size.height);
+        mainTextAreaPanel.add(textArea);
+        repaint();
         revalidate();
     }
 
-
-    private void addTestComments() {
-        textArea.append("1234");
-        textArea.revalidate();
-        comments.put(0, "Mein Kommentar");
-        comments.put(1, "Mein Kommentar 2");
-        comments.put(2, "Mein Kommentar 3");
-        comments.put(3, "Mein Kommentar 4");
-        printOutPositions();
-    }
-
-    private void printOutPositions() {
-        new Thread(() -> {
+    private void addButtonListener(JButton addCommentButton, JComponent textAreaComponent) {
+        addCommentButton.addActionListener(e -> {
+            int offset = textArea.getCaretPosition();
+            Rectangle position = null;
             try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                position = textArea.modelToView(offset);
+            } catch (BadLocationException e1) {
+                e1.printStackTrace();
             }
-            for(int i = 0; i < 4; i++){
-                Rectangle rectangle = null;
-                try {
-                    rectangle = textArea.modelToView(i);
-                } catch (BadLocationException e) {
-                    e.printStackTrace();
-                }
-                if(rectangle != null) {
-                    double x = rectangle.getX();
-                    double y = rectangle.getY();
-                    System.out.println("X: " + x + " Y: " + y);
-                }
+            if(position != null){
+                addComment(textAreaComponent, position);
             }
-        }).start();
-    }
-
-    private void addTextArea() {
-        textArea = new JTextArea() {
-            @Override
-            public JToolTip createToolTip() {
-                JToolTip toolTip = new EditableJToolTip(this);
-                return toolTip;
-            }
-
-            @Override
-            public String getToolTipText(MouseEvent event) {
-                for (int offset : comments.keySet()) {
-                    Rectangle rectangle = null;
-                    try {
-                        rectangle = textArea.modelToView(offset);
-                    } catch (BadLocationException e) {
-                        e.printStackTrace();
-                    }
-                    double x = rectangle.getX();
-                    double y = rectangle.getY();
-                    if (event.getX() <= x + 2 && event.getX() >= x - 2 && event.getY() <= y + 12 && event.getY() >= y - 7) {
-                        return comments.get(offset);
-                    }
-                }
-                if(debugCursor){
-                    return "X: " + event.getX() + " Y: " + event.getY();
-                }
-                // NO TOOLTIP
-                return null;
-            }
-        };
-        textArea.setToolTipText("Text");
-        textArea.setRows(29);
-        textArea.setEditable(true);
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        getContentPane().add(scrollPane, BorderLayout.NORTH);
+        });
     }
 
 
@@ -128,14 +89,35 @@ public final class MainFrame extends JFrame {
         return Toolkit.getDefaultToolkit().getScreenSize();
     }
 
-    /**
-     * Adds the given text to the textArea.
-     * This method is synchronized because it will be used in the networkThread.
-     *
-     * @param text The text to append
-     */
-    public synchronized void appendToTextArea(String text) {
-        textArea.append("\n" + text);
-        textArea.revalidate();
+    private void addComment(JComponent parentComponent, Rectangle position){
+        JPanel commentPanel = new JPanel();
+        EditableToolTipPanel editableToolTipPanel = new EditableToolTipPanel(commentPanel);
+        commentPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                editableToolTipPanel.setVisible(true);
+                editableToolTipPanel.requestFocusInWindow();
+                editableToolTipPanel.setClickedToEdit(true);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                editableToolTipPanel.setVisible(true);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if(!editableToolTipPanel.hasClickedToEdit()){
+                    editableToolTipPanel.setVisible(false);
+                }
+            }
+        });
+        parentComponent.add(commentPanel);
+        parentComponent.add(editableToolTipPanel);
+        JLabel commentLabel = new JLabel("C");
+        commentPanel.add(commentLabel);
+        commentPanel.setBounds(position.x, position.y,20, 20);
+        editableToolTipPanel.setVisible(false);
+        editableToolTipPanel.setText("Test");
     }
 }
