@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
 
 /**
  * The MainFrame is the main frame of the GUI (graphical user interface)
@@ -19,6 +21,7 @@ public final class MainFrame extends JFrame {
 
     private JTextArea textArea;
     private Map<List<Integer>, EditableToolTipPanel> comments = new HashMap<>();
+    private EditableToolTipPanel visibleComment;
 
     /**
      * The main method of the Chatsystem. Creates a MainFrame
@@ -56,36 +59,32 @@ public final class MainFrame extends JFrame {
         textArea = new JTextArea(100, 100);
         textArea.setEditable(true);
         textArea.setBounds(0, 0, getScreenSize().width / 2, getScreenSize().height / 2);
+        textArea.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent mouseEvent) {
+                int offset = textArea.viewToModel(mouseEvent.getPoint());
+                EditableToolTipPanel selectedComment = getEditableToolTipPanel(offset);
+                if (visibleComment != null && !visibleComment.hasClickedToEdit()) {
+                    visibleComment.setVisible(false);
+                }
+                if (selectedComment != null) {
+                    selectedComment.setVisible(true);
+                    visibleComment = selectedComment;
+                    //selectedComment.setClickedToEdit(true);
+                }
+            }
+        });
         textArea.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
                 int offset = textArea.viewToModel(mouseEvent.getPoint());
                 EditableToolTipPanel selectedComment = getEditableToolTipPanel(offset);
                 if (selectedComment != null) {
-                    selectedComment.setVisible(true);
-                    selectedComment.setClickedToEdit(true);
-                }
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent mouseEvent) {
-               int offset = textArea.viewToModel(mouseEvent.getPoint());
-               EditableToolTipPanel selectedComment = getEditableToolTipPanel(offset);
-                if (selectedComment != null) {
-                    selectedComment.setVisible(true);
-                }
-            }
-
-            @Override
-            public void mouseExited(MouseEvent mouseEvent) {
-                int offset = textArea.viewToModel(mouseEvent.getPoint());
-                EditableToolTipPanel selectedComment = getEditableToolTipPanel(offset);
-                if (selectedComment != null) {
-                    selectedComment.setVisible(false);
                     selectedComment.setClickedToEdit(true);
                 }
             }
         });
+        textArea.setText("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. \nAt vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. \nLorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.\n At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.");
         mainTextAreaPane.add(textArea, 0 ,0);
         addButtonListener(addCommentButton, mainTextAreaPane);
         repaint();
@@ -110,6 +109,12 @@ public final class MainFrame extends JFrame {
     }
 
     private void addComment(JLayeredPane pane, int offset){
+        Highlighter highlighter = textArea.getHighlighter();
+        try {
+            highlighter.addHighlight(offset, offset+1, new MyHighlightPainter(Color.lightGray));
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
         EditableToolTipPanel editableToolTipPanel = new EditableToolTipPanel(offset, textArea);
         pane.add(editableToolTipPanel, 1, 2);
         List<Integer> offsetRange = new ArrayList<>();
@@ -119,9 +124,12 @@ public final class MainFrame extends JFrame {
         editableToolTipPanel.setVisible(false);
         editableToolTipPanel.setText("Test");
     }
-
+    class MyHighlightPainter extends DefaultHighlighter.DefaultHighlightPainter {
+        public MyHighlightPainter(Color color) {
+            super(color);
+        }
+    }
     public EditableToolTipPanel getEditableToolTipPanel(int selectedOffset) {
-        System.out.println(selectedOffset);
         for(List<Integer> offSetRange : comments.keySet()){
             for(Integer offset : offSetRange){
                 if(offset == selectedOffset){

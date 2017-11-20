@@ -73,7 +73,7 @@ public class EditableToolTipPanel extends JPanel {
             e.printStackTrace();
         }
         int x = postionRectangle.x;
-        int y = postionRectangle.y + topLevelTextArea.getFont().getSize();
+        int y = postionRectangle.y + topLevelTextArea.getFont().getSize() + 1;
         setBounds(x , y , width, height);
         repaint();
         revalidate();
