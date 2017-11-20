@@ -13,8 +13,7 @@ public class EditableToolTipPanel extends JPanel {
     private JPanel parentPanel;
     private boolean clickedToEdit;
 
-    public EditableToolTipPanel(JPanel parentPanel){
-        this.parentPanel = parentPanel;
+    public EditableToolTipPanel(){
         textArea = new JTextArea();
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override

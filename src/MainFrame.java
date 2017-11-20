@@ -47,24 +47,22 @@ public final class MainFrame extends JFrame {
 
     private void createPanelToolTip() {
         getContentPane().setLayout(new BorderLayout());
-        JPanel mainTextAreaPanel = new JPanel();
-        mainTextAreaPanel.setLayout(null);
+        JLayeredPane mainTextAreaPane = new JLayeredPane();
+        mainTextAreaPane.setLayout(null);
         JButton addCommentButton = new JButton("Add Comment");
-        addButtonListener(addCommentButton, mainTextAreaPanel);
-        getContentPane().add(mainTextAreaPanel, BorderLayout.CENTER);
+        getContentPane().add(mainTextAreaPane, BorderLayout.CENTER);
         getContentPane().add(addCommentButton, BorderLayout.SOUTH);
-        Dimension size = getContentPane().getSize();
-        textArea = new JTextArea();
-        textArea.setRows(29);
-        textArea.setColumns(100);
+        Dimension size = getSize();
+        textArea = new JTextArea(100, 100);
         textArea.setEditable(true);
-        textArea.setBounds(0, 0, size.width, size.height);
-        mainTextAreaPanel.add(textArea);
+        textArea.setBounds(0, 0, getScreenSize().width / 2, getScreenSize().height / 2);
+        mainTextAreaPane.add(textArea, 0 ,0);
+        addButtonListener(addCommentButton, mainTextAreaPane);
         repaint();
         revalidate();
     }
 
-    private void addButtonListener(JButton addCommentButton, JComponent textAreaComponent) {
+    private void addButtonListener(JButton addCommentButton, JLayeredPane textAreaPane) {
         addCommentButton.addActionListener(e -> {
             int offset = textArea.getCaretPosition();
             Rectangle position = null;
@@ -74,7 +72,7 @@ public final class MainFrame extends JFrame {
                 e1.printStackTrace();
             }
             if(position != null){
-                addComment(textAreaComponent, position);
+                addComment(textAreaPane, position);
             }
         });
     }
@@ -89,10 +87,10 @@ public final class MainFrame extends JFrame {
         return Toolkit.getDefaultToolkit().getScreenSize();
     }
 
-    private void addComment(JComponent parentComponent, Rectangle position){
-        JPanel commentPanel = new JPanel();
-        EditableToolTipPanel editableToolTipPanel = new EditableToolTipPanel(commentPanel);
-        commentPanel.addMouseListener(new MouseAdapter() {
+    private void addComment(JLayeredPane pane, Rectangle position){
+        //JPanel commentPanel = new JPanel();
+        EditableToolTipPanel editableToolTipPanel = new EditableToolTipPanel();
+        /*commentPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 editableToolTipPanel.setVisible(true);
@@ -111,12 +109,12 @@ public final class MainFrame extends JFrame {
                     editableToolTipPanel.setVisible(false);
                 }
             }
-        });
-        parentComponent.add(commentPanel);
-        parentComponent.add(editableToolTipPanel);
+        });*/
+        //pane.add(commentPanel, 1, 1);
+        pane.add(editableToolTipPanel, 1, 2);
         JLabel commentLabel = new JLabel("C");
-        commentPanel.add(commentLabel);
-        commentPanel.setBounds(position.x, position.y,20, 20);
+        //commentPanel.add(commentLabel);
+        //commentPanel.setBounds(position.x, position.y,20, 20);
         editableToolTipPanel.setVisible(false);
         editableToolTipPanel.setText("Test");
     }
