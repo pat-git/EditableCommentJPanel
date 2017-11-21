@@ -1,10 +1,16 @@
 import javax.swing.border.Border;
 import java.awt.*;
 
-public class EditableToolTipPanelStyle implements Border {
+public class EditableCommentStyle implements Border {
 
-    private Color innerColor = Color.WHITE;
-    private Color borderColor = Color.BLACK;
+    /**
+     * The background color of the text/comment.
+     */
+    private final Color INNER_COLOR = Color.WHITE;
+    /**
+     * The color of the border of the comment box/panel.
+     */
+    private final Color BORDER_COLOR = Color.BLACK;
 
     /**
      * Paints the border for the specified component with the specified
@@ -23,14 +29,14 @@ public class EditableToolTipPanelStyle implements Border {
         width-=1;
         height-=1;
 
-        // Y-coordinate of the bottom side of the balloon
-        int yBottom;
-        yBottom = y + height;
+        // y-coordinate of the bottom side of the comment box
+        int yBottom = y + height;
 
-        // Draw the outline of the balloon
-        g2d.setPaint(innerColor);
+        // Draw the background/inner color of the comment box.
+        g2d.setPaint(INNER_COLOR);
         g2d.fillRect(x, y, width, yBottom);
-        g2d.setPaint(borderColor);
+        // Draw the border of the comment box.
+        g2d.setPaint(BORDER_COLOR);
         g2d.drawRect(x, y, width, yBottom);
     }
 
