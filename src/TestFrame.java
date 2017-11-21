@@ -72,6 +72,8 @@ public final class TestFrame extends JFrame {
                 "Lorem ipsum dolor sit amet.");
         commentManager = new CommentManager(textArea);
         getContentPane().add(commentManager.getMainTextAreaPane(), BorderLayout.CENTER);
+        revalidate();
+        repaint();
     }
 
     /**

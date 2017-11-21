@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
@@ -11,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CommentManager {
+class CommentManager {
 
     /**
      * The map in which all editable comment panels are stored. The key represents a list of offsets. The value is the
@@ -37,14 +39,14 @@ public class CommentManager {
      *
      * @param textArea The text area of which the comments should be managed by the CommentManager.
      */
-    public CommentManager (JTextArea textArea){
+    CommentManager(JTextArea textArea){
         this.textAreaToManage = textArea;
         createLayeredPane();
         createTextAreaListener();
     }
 
     private void createLayeredPane() {
-        JLayeredPane mainTextAreaPane = new JLayeredPane();
+        mainTextAreaPane = new JLayeredPane();
         mainTextAreaPane.setLayout(null);
         mainTextAreaPane.add(textAreaToManage, 0 ,0);
     }
@@ -57,7 +59,7 @@ public class CommentManager {
             @Override
             public void mouseMoved(MouseEvent mouseEvent) {
                 int offset = textAreaToManage.viewToModel(mouseEvent.getPoint());
-                EditableCommentPanel selectedComment = getEditableToolTipPanel(offset);
+                EditableCommentPanel selectedComment = getEditableCommentPanel(offset);
                 if (visibleComment != null && !visibleComment.isEditAble()) {
                     visibleComment.setVisible(false);
                 }
@@ -71,10 +73,30 @@ public class CommentManager {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
                 int offset = textAreaToManage.viewToModel(mouseEvent.getPoint());
-                EditableCommentPanel selectedComment = getEditableToolTipPanel(offset);
+                EditableCommentPanel selectedComment = getEditableCommentPanel(offset);
+                if (visibleComment != null) {
+                    visibleComment.setVisible(false);
+                }
                 if (selectedComment != null) {
+                    visibleComment = selectedComment;
                     selectedComment.setEditAble(true);
                 }
+            }
+        });
+        textAreaToManage.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+
             }
         });
     }
@@ -87,7 +109,7 @@ public class CommentManager {
      * @return A comment panel if the selected offset is in the list of offsets of the comment. If there's no comment
      *         which contains the selected offset in their offset list it will return {@code null}.
      */
-    private EditableCommentPanel getEditableToolTipPanel(int selectedOffset) {
+    private EditableCommentPanel getEditableCommentPanel(int selectedOffset) {
         for(List<Integer> offSetRange : comments.keySet()){
             for(Integer offset : offSetRange){
                 if(offset == selectedOffset){
@@ -107,7 +129,7 @@ public class CommentManager {
     void addComment(int firstOffset, int lastOffset){
         boolean offsetRangeAlreadyObtained = false;
         for(int i = firstOffset; i <= lastOffset; i++){
-            if(getEditableToolTipPanel(i) != null){
+            if(getEditableCommentPanel(i) != null){
                 offsetRangeAlreadyObtained = true;
             }
         }
@@ -118,7 +140,7 @@ public class CommentManager {
             } catch (BadLocationException e) {
                 e.printStackTrace();
             }
-            EditableCommentPanel editableCommentPanel = new EditableCommentPanel(firstOffset, textAreaToManage);
+            EditableCommentPanel editableCommentPanel = new EditableCommentPanel(firstOffset, textAreaToManage, this);
             mainTextAreaPane.add(editableCommentPanel, 1, 1);
             List<Integer> offsetRange = new ArrayList<>();
             for (int i = firstOffset; i <= lastOffset; i++) {
@@ -126,10 +148,27 @@ public class CommentManager {
             }
             comments.put(offsetRange, editableCommentPanel);
             editableCommentPanel.setVisible(false);
-            editableCommentPanel.setText("        ");
+            editableCommentPanel.setText("<<Comment>>");
         } else {
             // TODO warnUser because there's already a comment.
         }
+    }
+
+    /**
+     * Updates the offsets of the comment panels if the text in the main text area has been changed.
+     */
+    private  void updateOffsetPosition(){
+        // TODO update offsets
+    }
+
+    /**
+     * Deletes a comment located in the given offset.
+     *
+     * @param offset The comment that should be deleted.
+     */
+    void deleteComment(int offset){
+        EditableCommentPanel panelToDelete = getEditableCommentPanel(offset);
+        // TODO Delete Panel and remove highlighting
     }
 
     /**
@@ -137,7 +176,7 @@ public class CommentManager {
      *
      * @return The main text are pane.
      */
-    public JLayeredPane getMainTextAreaPane() {
+    JLayeredPane getMainTextAreaPane() {
         return mainTextAreaPane;
     }
 

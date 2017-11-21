@@ -28,6 +28,10 @@ public class EditableCommentPanel extends JPanel {
      * The flag that stores if the comment is editable.
      */
     private boolean editAble;
+    /**
+     * The reference to the commentManager which is managing this comment.
+     */
+    private CommentManager commentManager;
 
     /**
      * Creates a EditableCommentPanel with the given position offset and top level text area.
@@ -35,9 +39,10 @@ public class EditableCommentPanel extends JPanel {
      * @param positionOffset The position (offset) of the EditAbleCommentPanel in the text area.
      * @param topLevelTextArea The text area in which this panel is located.
      */
-    EditableCommentPanel(int positionOffset, JTextArea topLevelTextArea){
+    EditableCommentPanel(int positionOffset, JTextArea topLevelTextArea, CommentManager commentManager){
         this.positionOffset = positionOffset;
         this.topLevelTextArea = topLevelTextArea;
+        this.commentManager = commentManager;
         commentTextArea = new JTextArea();
         addCommentTextAreaListener();
         setBorder(new EditableCommentStyle());
@@ -70,7 +75,11 @@ public class EditableCommentPanel extends JPanel {
              */
             @Override
             public void removeUpdate(DocumentEvent e) {
-                refreshPosition();
+                if(commentTextArea.getText().equals("")){
+                    commentManager.deleteComment(positionOffset);
+                } else {
+                    refreshPosition();
+                }
             }
 
             /**
