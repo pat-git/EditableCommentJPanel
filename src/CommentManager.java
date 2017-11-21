@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class CommentManager {
+public class CommentManager {
 
     /**
      * The map in which all editable comment panels are stored. The key represents a list of offsets. The value is the
