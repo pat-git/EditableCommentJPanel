@@ -1,2 +1,1 @@
-# EditableJToolTip
-EditableJToolTip for a textarea
+# EditableCommentJPanel
